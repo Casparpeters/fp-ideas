@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FP Ideas</title>
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #fafaf8;
+    --gray: #f2f0ec;
+    --mid: #8a8880;
+    --border: #e0ddd8;
+    --red-bg: #fbeaea;
+    --red-txt: #8b2020;
+    --amber-bg: #fdf3e3;
+    --amber-txt: #7a4a0a;
+    --green-bg: #e8f2eb;
+    --green-txt: #2d5a3d;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--white);
+    color: var(--black);
+    min-height: 100vh;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+  }
+
+  header {
+    padding: 20px 0 14px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .logo { font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; }
+  .logo-sub { font-size: 11px; color: var(--mid); letter-spacing: 0.06em; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mid);
+    font-weight: 600;
+    margin-bottom: 9px;
+    display: block;
+  }
+
+  .field { margin-bottom: 20px; }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .pill {
+    padding: 8px 15px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 14px;
+    cursor: pointer;
+    background: white;
+    color: var(--black);
+    transition: all 0.12s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .pill.sel {
+    background: var(--black);
+    color: var(--white);
+    border-color: var(--black);
+  }
+
+  textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    font-size: 16px;
+    font-family: inherit;
+    resize: none;
+    background: white;
+    color: var(--black);
+    line-height: 1.5;
+    outline: none;
+  }
+
+  textarea:focus { border-color: var(--black); }
+  textarea::placeholder { color: #bbb; }
+
+  .btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--black);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: inherit;
+    cursor: pointer;
+    font-weight: 600;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-outline {
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    color: var(--black);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  /* Loading */
+  .load-wrap { text-align: center; padding: 80px 0; }
+  .spinner {
+    width: 30px; height: 30px;
+    border: 2px solid var(--border);
+    border-top-color: var(--black);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+    margin: 0 auto 18px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .load-txt { font-size: 14px; color: var(--mid); }
+
+  /* Preview card */
+  .card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 18px;
+    background: white;
+  }
+
+  .card-row {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-row:last-child { border-bottom: none; }
+
+  .row-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mid);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .row-val {
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--black);
+  }
+
+  [contenteditable="true"] {
+    outline: none;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 2px;
+    cursor: text;
+    display: block;
+  }
+
+  [contenteditable="true"]:focus { border-bottom-color: var(--black); }
+
+  .badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .badge-high { background: var(--red-bg); color: var(--red-txt); }
+  .badge-medium { background: var(--amber-bg); color: var(--amber-txt); }
+  .badge-low { background: var(--green-bg); color: var(--green-txt); }
+
+  .steps { list-style: none; }
+
+  .step {
+    display: flex;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.4;
+    align-items: flex-start;
+  }
+
+  .step:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .step-n {
+    min-width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--gray);
+    font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--mid);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .recip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
+
+  .recip-tag {
+    font-size: 12px;
+    padding: 4px 11px;
+    background: var(--gray);
+    border-radius: 999px;
+  }
+
+  .send-row { display: flex; gap: 10px; margin-top: 6px; }
+  .send-row .btn { flex: 2; }
+  .send-row .btn-outline { flex: 1; margin-top: 0; }
+
+  /* Sent */
+  .sent-wrap {
+    text-align: center;
+    padding: 70px 0;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+  }
+  .sent-check {
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--green-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: var(--green-txt);
+  }
+  .sent-title { font-size: 22px; font-weight: 600; }
+  .sent-sub { font-size: 14px; color: var(--mid); line-height: 1.5; max-width: 260px; }
+
+  .err {
+    background: var(--red-bg); color: var(--red-txt);
+    padding: 11px 14px; border-radius: var(--radius-sm);
+    font-size: 13px; margin-top: 10px; display: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">Filling Pieces</span>
+  <span class="logo-sub">Ideas — Boris</span>
+</header>
+
+<!-- INPUT -->
+<div id="s-input" class="screen active">
+  <div class="field">
+    <span class="label">Which team?</span>
+    <div class="pills" id="grp-pills">
+      <div class="pill" data-g="Advertising" data-r="Randy, Paulinho, Yoran">Advertising</div>
+      <div class="pill" data-g="Sales" data-r="Sales team">Sales</div>
+      <div class="pill" data-g="Design" data-r="Gui, Design team">Design</div>
+      <div class="pill" data-g="Operations" data-r="Ops team">Operations</div>
+      <div class="pill" data-g="Board" data-r="Board">Board</div>
+    </div>
+  </div>
+
+  <div class="field">
+    <span class="label">Your idea or update</span>
+    <textarea id="idea-txt" rows="7" placeholder="Dump your thoughts here — Dutch or English, however it comes out. What did you see? What do you want to try? What's the issue?"></textarea>
+  </div>
+
+  <div class="field">
+    <span class="label">How urgent is this?</span>
+    <div class="pills" id="urg-pills">
+      <div class="pill" data-u="high">🔴 This week</div>
+      <div class="pill" data-u="medium">🟡 This month</div>
+      <div class="pill" data-u="low">🟢 When time allows</div>
+    </div>
+  </div>
+
+  <button class="btn" onclick="doStructure()">Structure & preview →</button>
+  <div class="err" id="err">Please select a team, write your idea, and set urgency.</div>
+</div>
+
+<!-- LOADING -->
+<div id="s-load" class="screen">
+  <div class="load-wrap">
+    <div class="spinner"></div>
+    <div class="load-txt">Structuring your idea…</div>
+  </div>
+</div>
+
+<!-- PREVIEW -->
+<div id="s-preview" class="screen">
+  <p style="font-size:13px;color:var(--mid);margin-bottom:16px;">Review below. Tap any text to edit it.</p>
+  <div class="card" id="preview-card"></div>
+  <div class="field">
+    <span class="label">Recipients</span>
+    <div class="recip-row" id="recip-row"></div>
+  </div>
+  <div class="send-row">
+    <button class="btn-outline" onclick="show('s-input')">← Edit</button>
+    <button class="btn" onclick="doSend()">Send email ✓</button>
+  </div>
+</div>
+
+<!-- SENT -->
+<div id="s-sent" class="screen">
+  <div class="sent-wrap">
+    <div class="sent-check">✓</div>
+    <div class="sent-title">Sent.</div>
+    <div class="sent-sub" id="sent-sub">Your structured idea is ready for the team.</div>
+    <button class="btn-outline" style="max-width:220px;margin-top:8px;" onclick="doReset()">New idea →</button>
+  </div>
+</div>
+
+<script>
+  let grp = null, recip = null, urg = null, structured = null;
+
+  document.querySelectorAll('#grp-pills .pill').forEach(p => p.addEventListener('click', () => {
+    document.querySelectorAll('#grp-pills .pill').forEach(x => x.classList.remove('sel'));
+    p.classList.add('sel'); grp = p.dataset.g; recip = p.dataset.r;
+  }));
+
+  document.querySelectorAll('#urg-pills .pill').forEach(p => p.addEventListener('click', () => {
+    document.querySelectorAll('#urg-pills .pill').forEach(x => x.classList.remove('sel'));
+    p.classList.add('sel'); urg = p.dataset.u;
+  }));
+
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  async function doStructure() {
+    const txt = document.getElementById('idea-txt').value.trim();
+    const err = document.getElementById('err');
+    if (!grp || !txt || !urg) { err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    show('s-load');
+
+    const urgLabel = { high: 'This week (urgent)', medium: 'This month', low: 'When time allows' }[urg];
+
+    const prompt = `You are a business communication assistant for Filling Pieces, a premium Amsterdam streetwear brand.
+The CEO Boris has shared a raw idea for the ${grp} team. Urgency: ${urgLabel}.
+
+Raw input: "${txt}"
+
+Respond ONLY with valid JSON, no markdown, no extra text:
+{
+  "title": "max 8 words",
+  "idea": "1-2 sentence summary of the core idea",
+  "context": "why this matters or what Boris observed",
+  "objective": "what Boris wants to achieve",
+  "nextSteps": ["step 1", "step 2", "step 3"],
+  "owner": "who should act on this",
+  "urgency": "${urgLabel}"
+}`;
+
+    try {
+      const res = await fetch('/api/structure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+      const data = await res.json();
+      const raw = data.content.map(b => b.text || '').join('').trim().replace(/```json|```/g, '').trim();
+      structured = JSON.parse(raw);
+      renderPreview();
+      renderRecip();
+      show('s-preview');
+    } catch (e) {
+      alert('Something went wrong. Please try again.');
+      show('s-input');
+    }
+  }
+
+  function renderPreview() {
+    const d = structured;
+    const urgClass = { 'This week (urgent)': 'badge-high', 'This month': 'badge-medium', 'When time allows': 'badge-low' }[d.urgency] || 'badge-medium';
+    document.getElementById('preview-card').innerHTML = `
+      <div class="card-row"><div class="row-label">Idea</div><div class="row-val" contenteditable="true" id="e-title" style="font-size:17px;font-weight:600;">${d.title}</div></div>
+      <div class="card-row"><div class="row-label">Summary</div><div class="row-val" contenteditable="true" id="e-idea">${d.idea}</div></div>
+      <div class="card-row"><div class="row-label">Context</div><div class="row-val" contenteditable="true" id="e-ctx">${d.context}</div></div>
+      <div class="card-row"><div class="row-label">Objective</div><div class="row-val" contenteditable="true" id="e-obj">${d.objective}</div></div>
+      <div class="card-row"><div class="row-label">Urgency</div><span class="badge ${urgClass}">${d.urgency}</span></div>
+      <div class="card-row"><div class="row-label">Next steps</div><ul class="steps" id="e-steps">${d.nextSteps.map((s, i) => `<li class="step"><span class="step-n">${i + 1}</span><span contenteditable="true">${s}</span></li>`).join('')}</ul></div>
+      <div class="card-row"><div class="row-label">Owner</div><div class="row-val" contenteditable="true" id="e-owner">${d.owner}</div></div>
+    `;
+  }
+
+  function saveEdits() {
+    const g = id => document.getElementById(id);
+    if (g('e-title')) structured.title = g('e-title').innerText;
+    if (g('e-idea')) structured.idea = g('e-idea').innerText;
+    if (g('e-ctx')) structured.context = g('e-ctx').innerText;
+    if (g('e-obj')) structured.objective = g('e-obj').innerText;
+    if (g('e-owner')) structured.owner = g('e-owner').innerText;
+    document.querySelectorAll('#e-steps li span[contenteditable]').forEach((s, i) => {
+      if (structured.nextSteps[i] !== undefined) structured.nextSteps[i] = s.innerText;
+    });
+  }
+
+  function renderRecip() {
+    document.getElementById('recip-row').innerHTML = (recip || '').split(',').map(r => `<span class="recip-tag">${r.trim()}</span>`).join('');
+  }
+
+  function doSend() {
+    saveEdits();
+    const d = structured;
+    const steps = d.nextSteps.map((s, i) => `${i + 1}. ${s}`).join('\n');
+    const body = `FILLING PIECES — ${grp.toUpperCase()} UPDATE\n${'─'.repeat(38)}\n\n${d.title.toUpperCase()}\n\nSummary: ${d.idea}\n\nContext: ${d.context}\n\nObjective: ${d.objective}\n\nUrgency: ${d.urgency}\n\nNext steps:\n${steps}\n\nOwner: ${d.owner}\n\n${'─'.repeat(38)}\nSent via FP Ideas — Filling Pieces`;
+    window.location.href = `mailto:?subject=FP ${grp}: ${d.title}&body=${encodeURIComponent(body)}`;
+    document.getElementById('sent-sub').textContent = `Your idea has been prepared for the ${grp} team.`;
+    show('s-sent');
+  }
+
+  function doReset() {
+    grp = null; recip = null; urg = null; structured = null;
+    document.getElementById('idea-txt').value = '';
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('sel'));
+    show('s-input');
+  }
+</script>
+</body>
+</html>
