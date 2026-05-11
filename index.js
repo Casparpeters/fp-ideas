@@ -38,6 +38,7 @@ const server = http.createServer(async (req, res) => {
         });
 
         const data = await response.json();
+        console.log('Anthropic response:', JSON.stringify(data));
         res.writeHead(200, {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
