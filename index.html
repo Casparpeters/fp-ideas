@@ -376,8 +376,12 @@ Respond ONLY with valid JSON, no markdown, no extra text:
         body: JSON.stringify({ prompt })
       });
       const data = await res.json();
-      const raw = data.content.map(b => b.text || '').join('').trim().replace(/```json|```/g, '').trim();
-      structured = JSON.parse(raw);
+console.log('Response:', JSON.stringify(data));
+if (!data.content || !data.content[0]) {
+  throw new Error('No content: ' + JSON.stringify(data));
+}
+const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
+structured = JSON.parse(raw);
       renderPreview();
       renderRecip();
       show('s-preview');
