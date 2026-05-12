@@ -355,9 +355,11 @@
     const urgLabel = { high: 'This week (urgent)', medium: 'This month', low: 'When time allows' }[urg];
 
     const prompt = `You are a business communication assistant for Filling Pieces, a premium Amsterdam streetwear brand.
-The CEO Boris has shared a raw idea for the ${grp} team. Urgency: ${urgLabel}.
+The sender has shared a raw idea for the ${grp} team. Urgency: ${urgLabel}.
 
 Raw input: "${txt}"
+
+Important: Write all fields in the first person or neutral voice. Never refer to "Boris" or "the sender" in the output. Instead of "Boris wants to..." write "The goal is to...". Instead of "Boris has observed..." write "We've noticed..." or "The opportunity here is...". Keep it direct and professional.
 
 Respond ONLY with valid JSON, no markdown, no extra text:
 {
