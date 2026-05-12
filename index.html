@@ -129,6 +129,63 @@
     margin-top: 10px;
   }
 
+  /* Image upload */
+  .upload-area {
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+    background: var(--gray);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .upload-area:active { opacity: 0.7; }
+
+  .upload-icon { font-size: 22px; margin-bottom: 5px; }
+
+  .upload-txt { font-size: 13px; color: var(--mid); }
+
+  .img-previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .img-wrap {
+    position: relative;
+    width: 80px;
+    height: 80px;
+  }
+
+  .img-wrap img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+
+  .img-remove {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 20px;
+    height: 20px;
+    background: var(--black);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+  }
+
   /* Loading */
   .load-wrap { text-align: center; padding: 80px 0; }
   .spinner {
@@ -179,6 +236,7 @@
     padding-bottom: 2px;
     cursor: text;
     display: block;
+    min-height: 1.2em;
   }
 
   [contenteditable="true"]:focus { border-bottom-color: var(--black); }
@@ -229,6 +287,29 @@
     border-radius: 999px;
   }
 
+  /* Preview images row */
+  .preview-imgs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .preview-imgs img {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+
+  .img-note {
+    font-size: 12px;
+    color: var(--mid);
+    margin-top: 6px;
+    font-style: italic;
+  }
+
   .send-row { display: flex; gap: 10px; margin-top: 6px; }
   .send-row .btn { flex: 2; }
   .send-row .btn-outline { flex: 1; margin-top: 0; }
@@ -268,17 +349,27 @@
     <span class="label">Which team?</span>
     <div class="pills" id="grp-pills">
       <div class="pill" data-g="Collection" data-r="Collection team">Collection</div>
-<div class="pill" data-g="Marketing" data-r="Marketing team">Marketing</div>
-<div class="pill" data-g="E-commerce" data-r="E-commerce team">E-commerce</div>
-<div class="pill" data-g="Sales" data-r="Sales team">Sales</div>
-<div class="pill" data-g="Operations" data-r="Ops team">Operations</div>
-<div class="pill" data-g="Board" data-r="Board">Board</div>
+      <div class="pill" data-g="Marketing" data-r="Marketing team">Marketing</div>
+      <div class="pill" data-g="E-commerce" data-r="E-commerce team">E-commerce</div>
+      <div class="pill" data-g="Sales" data-r="Sales team">Sales</div>
+      <div class="pill" data-g="Operations" data-r="Ops team">Operations</div>
+      <div class="pill" data-g="Board" data-r="Board">Board</div>
     </div>
   </div>
 
   <div class="field">
     <span class="label">Your idea or update</span>
-    <textarea id="idea-txt" rows="7" placeholder="Dump your thoughts here — Dutch or English, however it comes out. What did you see? What do you want to try? What's the issue?"></textarea>
+    <textarea id="idea-txt" rows="6" placeholder="Dump your thoughts here — Dutch or English, however it comes out. What did you see? What do you want to try? What's the issue?"></textarea>
+  </div>
+
+  <div class="field">
+    <span class="label">Add images (optional)</span>
+    <div class="upload-area" onclick="document.getElementById('img-input').click()">
+      <div class="upload-icon">📷</div>
+      <div class="upload-txt">Tap to add photos from your camera roll</div>
+    </div>
+    <input type="file" id="img-input" accept="image/*" multiple capture="environment" style="display:none">
+    <div class="img-previews" id="img-previews"></div>
   </div>
 
   <div class="field">
@@ -305,6 +396,7 @@
 <!-- PREVIEW -->
 <div id="s-preview" class="screen">
   <p style="font-size:13px;color:var(--mid);margin-bottom:16px;">Review below. Tap any text to edit it.</p>
+  <div id="preview-imgs-row"></div>
   <div class="card" id="preview-card"></div>
   <div class="field">
     <span class="label">Recipients</span>
@@ -328,6 +420,7 @@
 
 <script>
   let grp = null, recip = null, urg = null, structured = null;
+  let images = []; // { dataUrl, name }
 
   document.querySelectorAll('#grp-pills .pill').forEach(p => p.addEventListener('click', () => {
     document.querySelectorAll('#grp-pills .pill').forEach(x => x.classList.remove('sel'));
@@ -338,6 +431,34 @@
     document.querySelectorAll('#urg-pills .pill').forEach(x => x.classList.remove('sel'));
     p.classList.add('sel'); urg = p.dataset.u;
   }));
+
+  // Image handling
+  document.getElementById('img-input').addEventListener('change', (e) => {
+    Array.from(e.target.files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        images.push({ dataUrl: ev.target.result, name: file.name });
+        renderImagePreviews();
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = ''; // allow re-selecting same file
+  });
+
+  function renderImagePreviews() {
+    const container = document.getElementById('img-previews');
+    container.innerHTML = images.map((img, i) => `
+      <div class="img-wrap">
+        <img src="${img.dataUrl}" alt="image ${i+1}">
+        <button class="img-remove" onclick="removeImg(${i})">×</button>
+      </div>
+    `).join('');
+  }
+
+  function removeImg(i) {
+    images.splice(i, 1);
+    renderImagePreviews();
+  }
 
   function show(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -355,18 +476,18 @@
     const urgLabel = { high: 'This week (urgent)', medium: 'This month', low: 'When time allows' }[urg];
 
     const prompt = `You are a business communication assistant for Filling Pieces, a premium Amsterdam streetwear brand.
-The sender has shared a raw idea for the ${grp} team. Urgency: ${urgLabel}.
+A raw idea has been submitted for the ${grp} team. Urgency: ${urgLabel}.
 
 Raw input: "${txt}"
 
-Important: Write all fields in the first person or neutral voice. Never refer to "Boris" or "the sender" in the output. Instead of "Boris wants to..." write "The goal is to...". Instead of "Boris has observed..." write "We've noticed..." or "The opportunity here is...". Keep it direct and professional.
+Important: Write all fields in first person plural or neutral voice. Never mention "Boris" or "the sender". Instead of "Boris wants to..." use "The goal is to...". Instead of "Boris has observed..." use "We've noticed..." or "The opportunity is...". Keep it direct and professional.
 
 Respond ONLY with valid JSON, no markdown, no extra text:
 {
   "title": "max 8 words",
   "idea": "1-2 sentence summary of the core idea",
-  "context": "why this matters or what Boris observed",
-  "objective": "what Boris wants to achieve",
+  "context": "why this matters or what was observed",
+  "objective": "what we want to achieve",
   "nextSteps": ["step 1", "step 2", "step 3"],
   "owner": "who should act on this",
   "urgency": "${urgLabel}"
@@ -379,14 +500,11 @@ Respond ONLY with valid JSON, no markdown, no extra text:
         body: JSON.stringify({ prompt })
       });
       const data = await res.json();
-console.log('Response:', JSON.stringify(data));
-if (!data.content || !data.content[0]) {
-  throw new Error('No content: ' + JSON.stringify(data));
-}
-const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
-structured = JSON.parse(raw);
+      const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
+      structured = JSON.parse(raw);
       renderPreview();
       renderRecip();
+      renderPreviewImages();
       show('s-preview');
     } catch (e) {
       alert('Something went wrong. Please try again.');
@@ -405,6 +523,18 @@ structured = JSON.parse(raw);
       <div class="card-row"><div class="row-label">Urgency</div><span class="badge ${urgClass}">${d.urgency}</span></div>
       <div class="card-row"><div class="row-label">Next steps</div><ul class="steps" id="e-steps">${d.nextSteps.map((s, i) => `<li class="step"><span class="step-n">${i + 1}</span><span contenteditable="true">${s}</span></li>`).join('')}</ul></div>
       <div class="card-row"><div class="row-label">Owner</div><div class="row-val" contenteditable="true" id="e-owner">${d.owner}</div></div>
+    `;
+  }
+
+  function renderPreviewImages() {
+    const row = document.getElementById('preview-imgs-row');
+    if (images.length === 0) { row.innerHTML = ''; return; }
+    row.innerHTML = `
+      <div class="field">
+        <span class="label">Images (${images.length})</span>
+        <div class="preview-imgs">${images.map((img, i) => `<img src="${img.dataUrl}" alt="image ${i+1}">`).join('')}</div>
+        <div class="img-note">📎 Remember to attach these images manually when your email app opens.</div>
+      </div>
     `;
   }
 
@@ -428,15 +558,17 @@ structured = JSON.parse(raw);
     saveEdits();
     const d = structured;
     const steps = d.nextSteps.map((s, i) => `${i + 1}. ${s}`).join('\n');
-    const body = `FILLING PIECES — ${grp.toUpperCase()} UPDATE\n${'─'.repeat(38)}\n\n${d.title.toUpperCase()}\n\nSummary: ${d.idea}\n\nContext: ${d.context}\n\nObjective: ${d.objective}\n\nUrgency: ${d.urgency}\n\nNext steps:\n${steps}\n\nOwner: ${d.owner}\n\n${'─'.repeat(38)}\nSent via FP Ideas — Filling Pieces`;
+    const imgNote = images.length > 0 ? `\n\n📎 ${images.length} image${images.length > 1 ? 's' : ''} attached — see below.` : '';
+    const body = `FILLING PIECES — ${grp.toUpperCase()} UPDATE\n${'─'.repeat(38)}\n\n${d.title.toUpperCase()}\n\nSummary: ${d.idea}\n\nContext: ${d.context}\n\nObjective: ${d.objective}\n\nUrgency: ${d.urgency}\n\nNext steps:\n${steps}\n\nOwner: ${d.owner}${imgNote}\n\n${'─'.repeat(38)}\nSent via FP Ideas — Filling Pieces`;
     window.location.href = `mailto:?subject=FP ${grp}: ${d.title}&body=${encodeURIComponent(body)}`;
     document.getElementById('sent-sub').textContent = `Your idea has been prepared for the ${grp} team.`;
     show('s-sent');
   }
 
   function doReset() {
-    grp = null; recip = null; urg = null; structured = null;
+    grp = null; recip = null; urg = null; structured = null; images = [];
     document.getElementById('idea-txt').value = '';
+    document.getElementById('img-previews').innerHTML = '';
     document.querySelectorAll('.pill').forEach(p => p.classList.remove('sel'));
     show('s-input');
   }
